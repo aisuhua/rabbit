@@ -15,6 +15,7 @@ $msg = new AMQPMessage(
     ]
 );
 
+// 使用默认 direct 交换器
 $channel->basic_publish($msg, 'amq.direct', 'demo03');
 
 echo ' [x] Sent ', $data, "\n";

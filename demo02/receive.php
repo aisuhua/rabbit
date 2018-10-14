@@ -8,6 +8,10 @@ $channel = $connection->channel();
 
 $channel->queue_declare('suhua', false, true, false, false);
 
+// 当声明一个队列时，它会自动绑定到默认交换机，并以队列名称作为路由键
+// ACCESS_REFUSED - operation not permitted on the default exchange
+// $channel->queue_bind('task_queue', '', 'task_queue');
+
 $callback = function ($msg) {
     echo ' [x] Received ', $msg->body, "\n";
     sleep(10);

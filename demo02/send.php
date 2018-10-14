@@ -15,7 +15,6 @@ $msg = new AMQPMessage(
     ]
 );
 
-
 $channel->basic_publish($msg, '', 'suhua');
 
 echo ' [x] Sent ', $data, "\n";
