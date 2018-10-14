@@ -12,3 +12,10 @@
 2. 若不进行显式绑定，队列创建后默认使用队列名作为 binding key 绑定到默认交换器（AMQP default）。
     - 默认交换器（AMQP default）是一个名字为空的 direct 类型的交换器；
     - 系统内置的 amp.direct、amp.fanout、amp.topic 交换器可以直接使用，无需自行创建交换器亦可直接使用；
+3. 连接到集群中哪一个 RabbitMQ 实例创建队列，队列就会创建在这一个 RabbitMQ 实例。
+
+## ack/nack/reject 的区别
+
+- [Negative Acknowledgements](https://www.rabbitmq.com/nack.html)
+- [Consumer Acknowledgements and Publisher Confirms](https://www.rabbitmq.com/confirms.html)
+- [Ack or Nack in rabbitMQ](https://stackoverflow.com/questions/28794123/ack-or-nack-in-rabbitmq)
