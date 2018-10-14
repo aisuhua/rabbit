@@ -5,8 +5,13 @@ include(__DIR__ . '/config.php');
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Wire\AMQPTable;
 
+// Please see: https://github.com/aisuhua/wiki/wiki/rabbitmq#配置镜像队列
+
 $exchange = 'router';
-$queue = 'two.queue';
+$queue = 'normal_queue';
+$ha_two_queue = 'two.queue';
+$ha_all_queue = 'ha.queue';
+$ha_nodes_queue = 'nodes.queue';
 $consumerTag = 'consumer';
 
 $connection = new AMQPStreamConnection(HOST, PORT, USER, PASS, VHOST);
@@ -21,7 +26,10 @@ $channel = $connection->channel();
     nowait: false // Doesn't wait on replies for certain things.
     parameters: array // How you send certain extra data to the queue declare
 */
-$channel->queue_declare($queue, false, true, false, false, false);
+$channel->queue_declare($queue, false, false, false, true);
+$channel->queue_declare($ha_two_queue, false, false, false, true);
+$channel->queue_declare($ha_all_queue, false, false, false, true);
+$channel->queue_declare($ha_nodes_queue, false, false, false, true);
 
 /*
     name: $exchange
@@ -34,6 +42,9 @@ $channel->queue_declare($queue, false, true, false, false, false);
 $channel->exchange_declare($exchange, 'direct', false, true, false);
 
 $channel->queue_bind($queue, $exchange);
+$channel->queue_bind($ha_two_queue, $exchange);
+$channel->queue_bind($ha_all_queue, $exchange);
+$channel->queue_bind($ha_nodes_queue, $exchange);
 
 /**
  * @param \PhpAmqpLib\Message\AMQPMessage $message
@@ -64,7 +75,7 @@ function process_message($message)
     callback: A PHP Callback
 */
 
-$channel->basic_consume($queue, $consumerTag, false, false, false, false, 'process_message');
+$channel->basic_consume($ha_all_queue, $consumerTag, false, false, false, false, 'process_message');
 
 /**
  * @param \PhpAmqpLib\Channel\AMQPChannel $channel
