@@ -1,20 +1,16 @@
 <?php
 
 include(__DIR__ . '/config.php');
+
 use PhpAmqpLib\Connection\AMQPStreamConnection;
+use PhpAmqpLib\Wire\AMQPTable;
 
 $exchange = 'router';
-$queue = 'msgs';
+$queue = 'two.queue';
 $consumerTag = 'consumer';
 
 $connection = new AMQPStreamConnection(HOST, PORT, USER, PASS, VHOST);
 $channel = $connection->channel();
-
-/*
-    The following code is the same both in the consumer and the producer.
-    In this way we are sure we always have a queue to consume from and an
-        exchange where to publish messages.
-*/
 
 /*
     name: $queue
@@ -22,8 +18,10 @@ $channel = $connection->channel();
     durable: true // the queue will survive server restarts
     exclusive: false // the queue can be accessed in other channels
     auto_delete: false //the queue won't be deleted once the channel is closed.
+    nowait: false // Doesn't wait on replies for certain things.
+    parameters: array // How you send certain extra data to the queue declare
 */
-$channel->queue_declare($queue, false, true, false, false);
+$channel->queue_declare($queue, false, true, false, false, false);
 
 /*
     name: $exchange
@@ -46,18 +44,9 @@ function process_message($message)
     echo $message->body;
     echo "\n--------\n";
 
-    $message->delivery_info['channel']->basic_ack($message->delivery_info['delivery_tag']);
+    sleep(20);
 
-    /*if($message->delivery_info['redelivered'])
-    {
-        echo 'ack', PHP_EOL;
-        $message->delivery_info['channel']->basic_ack($message->delivery_info['delivery_tag']);
-    }
-    else
-    {
-        echo 'nack', PHP_EOL;
-        $message->delivery_info['channel']->basic_nack($message->delivery_info['delivery_tag'], false, true);
-    }*/
+    $message->delivery_info['channel']->basic_ack($message->delivery_info['delivery_tag']);
 
     // Send a message with the string "quit" to cancel the consumer.
     if ($message->body === 'quit') {

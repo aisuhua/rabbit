@@ -32,6 +32,9 @@ function process_message($message)
         $message->delivery_info['channel']->basic_ack($message->delivery_info['delivery_tag']);
     } else {
         $message->delivery_info['channel']->basic_nack($message->delivery_info['delivery_tag']);
+
+        // 将消息重新返回队列 requeue = true
+        // $message->delivery_info['channel']->basic_nack($message->delivery_info['delivery_tag'], false, true);
     }
 
     // Send a message with the string "quit" to cancel the consumer.
