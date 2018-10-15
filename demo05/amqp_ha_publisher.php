@@ -1,8 +1,7 @@
 <?php
 include(__DIR__ . '/config.php');
 
-$exchangeName = 'router';
-$queueName = 'msgs';
+$exchange_name = 'router';
 
 // Establish connection to AMQP
 $connection = new AMQPConnection($GLOBALS['rabbitmq']);
@@ -14,7 +13,7 @@ $channel = new AMQPChannel($connection);
 // AMQPC Exchange is the publishing mechanism
 $exchange = new AMQPExchange($channel);
 $exchange->setType(AMQP_EX_TYPE_DIRECT);
-$exchange->setName($exchangeName);
+$exchange->setName($exchange_name);
 $exchange->setFlags(AMQP_DURABLE);
 $exchange->declareExchange();
 
@@ -26,3 +25,5 @@ $attributes = [
 
 // Routing key is empty
 $exchange->publish($message, '', AMQP_NOPARAM, $attributes);
+
+$connection->disconnect();

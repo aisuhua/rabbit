@@ -1,9 +1,9 @@
 <?php
 include(__DIR__ . '/config.php');
 
-$exchangeName = 'router';
-$queueName = 'msgs';
-$consumerTag = 'consumer';
+$exchange_name = 'router';
+$queue_name = 'priority-queue';
+$consumer_tag = 'consumer';
 
 // Establish connection to AMQP
 $connection = new AMQPConnection($GLOBALS['rabbitmq']);
@@ -15,21 +15,15 @@ $channel = new AMQPChannel($connection);
 // Set prefetch count
 $channel->setPrefetchCount(1);
 
-// AMQPC Exchange is the publishing mechanism
-$exchange = new AMQPExchange($channel);
-$exchange->setType(AMQP_EX_TYPE_DIRECT);
-$exchange->setName($exchangeName);
-$exchange->setFlags(AMQP_DURABLE);
-$exchange->declareExchange();
-
-// Create queue
+// Create queue and set the priority
 $queue = new AMQPQueue($channel);
-$queue->setName($queueName);
+$queue->setName($queue_name);
 $queue->setFlags(AMQP_DURABLE);
+$queue->setArgument('x-max-priority', 10);
 $queue->declareQueue();
 
 // binding key is empty
-$queue->bind($exchangeName);
+$queue->bind($exchange_name, $queue_name);
 
 echo ' [*] Waiting for logs. To exit press CTRL+C', PHP_EOL;
 
@@ -38,6 +32,7 @@ $process_message = function(AMQPEnvelope $message, AMQPQueue $queue) use (&$max_
     echo $message->getBody();
     echo "\n--------\n";
 
+    echo 'Priority ', $message->getPriority(), PHP_EOL;
     sleep(10);
 
     $queue->ack($message->getDeliveryTag());
@@ -47,5 +42,6 @@ $process_message = function(AMQPEnvelope $message, AMQPQueue $queue) use (&$max_
     }
 };
 
-$queue->consume($process_message, AMQP_NOPARAM, $consumerTag);
+$queue->consume($process_message, AMQP_NOPARAM, $consumer_tag);
 $connection->disconnect();
+
