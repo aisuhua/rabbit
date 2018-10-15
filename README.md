@@ -1,4 +1,9 @@
 
+## 连接的 library
+
+- [PHP AMQP Binding Library](https://github.com/pdezwart/php-amqp) PHP Extension faster
+- [php-amqplib](https://github.com/php-amqplib/php-amqplib) The most widely used PHP client for RabbitMQ
+
 总结几个概念
 
 1. 消息是发布到交换器，由交换器将消息路由到队列。
