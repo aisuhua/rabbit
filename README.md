@@ -3,6 +3,7 @@
 
 - [PHP AMQP Binding Library](https://github.com/pdezwart/php-amqp) Object-oriented PHP bindings for the AMQP C library
 - [php-amqplib](https://github.com/php-amqplib/php-amqplib) This library is a pure PHP implementation of the AMQP 0-9-1 protocol
+- [PECL: amqp](https://pecl.php.net/package/amqp)
 
 总结几个概念
 
