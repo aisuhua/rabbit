@@ -1,8 +1,8 @@
 
 ## 连接的 library
 
-- [PHP AMQP Binding Library](https://github.com/pdezwart/php-amqp) PHP Extension faster
-- [php-amqplib](https://github.com/php-amqplib/php-amqplib) The most widely used PHP client for RabbitMQ
+- [PHP AMQP Binding Library](https://github.com/pdezwart/php-amqp) Object-oriented PHP bindings for the AMQP C library
+- [php-amqplib](https://github.com/php-amqplib/php-amqplib) This library is a pure PHP implementation of the AMQP 0-9-1 protocol
 
 总结几个概念
 
