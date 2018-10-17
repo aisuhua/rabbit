@@ -18,6 +18,9 @@
     - 默认交换器（AMQP default）是一个名字为空的 direct 类型的交换器；
     - 系统内置的 amp.direct、amp.fanout、amp.topic 交换器可以直接使用，无需自行创建交换器亦可直接使用；
 3. 连接到集群中哪一个 RabbitMQ 实例创建队列，队列就会创建在这一个 RabbitMQ 实例。
+4. 队列一旦创建后，就无法对该队列进行任何修改。
+    - x-max-priority 优先级在队列创建时声明，后续无法动态修改，除非删除队列；
+    - Policy 策略可以在运行时随时变更并马上生效，比如添加镜像队列策略；
 
 ## ack/nack/reject 的区别
 
