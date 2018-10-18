@@ -3,7 +3,7 @@
 /**
  * 业务层使用入口
  */
-class cls_rabbitmq1
+class cls_rabbitmq
 {
     /**
      * 消费队列
@@ -30,12 +30,12 @@ class cls_rabbitmq1
      * 添加队列任务
      *
      * @param $queue_name
-     * @param array $payload
+     * @param $payload
      * @param string $host
      * @param array $options
      * @return bool 添加成功返回 true，否则返回 false
      */
-    public static function add_job($queue_name, array $payload, $host='rabbitmq', array $options = array())
+    public static function add_job($queue_name, $payload, $host='rabbitmq', array $options = array())
     {
         if(!isset($GLOBALS['config'][$host]))
         {
@@ -53,7 +53,7 @@ class cls_rabbitmq1
  *
  * @link https://github.com/pdezwart/php-amqp
  */
-class AMQPCAdapter2
+class AMQPCAdapter
 {
     private $exchange_name = 'amq.direct';
     private $queue_prefix = '';
@@ -204,7 +204,7 @@ class AMQPCAdapter2
      * @param array $payload
      * @return bool
      */
-    public function publish($queue_name, array $payload)
+    public function publish($queue_name, $payload)
     {
         // 创建连接
         $this->connect();
@@ -459,8 +459,12 @@ class AMQPCAdapter2
             }
         }
 
-        $len = count($this->hosts);
-        foreach ($this->hosts as $i => $host)
+        // 随机连接任意一台服务器
+        $hosts = $this->hosts;
+        shuffle($hosts);
+        $len = count($hosts);
+
+        foreach ($hosts as $i => $host)
         {
             try
             {

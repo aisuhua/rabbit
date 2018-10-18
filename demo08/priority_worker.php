@@ -3,7 +3,10 @@ require ('config.php');
 require('cls_rabbitmq.php');
 require ('functions.php');
 
+// 队列名称
 $queue_name = 'priority-suhua';
+
+// 回调方法
 $callback = function($params)
 {
     print_r($params);
@@ -21,7 +24,7 @@ $callback = function($params)
     return true;
 };
 
-// 自定义其他配置
+//
 $options = [
     'x_max_priority' => 10, // 该队列支持的最大优先级，一旦创建无法修改
     'disable_signal_handle' => false,
