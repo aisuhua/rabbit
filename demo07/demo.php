@@ -35,7 +35,7 @@ class cls_rabbitmq2
     }
 }
 
-class AMQPCAdapter
+class AMQPCAdapter1
 {
     private $connection;
     private $channel;
