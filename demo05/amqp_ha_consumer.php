@@ -59,7 +59,7 @@ $process_message = function(AMQPEnvelope $message, AMQPQueue $queue) use (&$max_
     echo $message->getBody();
     echo "\n--------\n";
 
-    sleep(10);
+    sleep(5);
 
     $queue->ack($message->getDeliveryTag());
 

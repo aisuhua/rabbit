@@ -8,13 +8,13 @@ class cls_rabbitmq
     /**
      * 消费队列
      *
-     * @param $queue_name
+     * @param string $queue_name
      * @param $callback
      * @param string $host
      * @param array $options
      * @return void
      */
-    public static function do_job($queue_name, $callback, $host = 'rabbitmq', array $options = array())
+    public static function consume($queue_name, $callback, $host = 'rabbitmq', array $options = array())
     {
         if(!isset($GLOBALS['config'][$host]))
         {
@@ -29,13 +29,13 @@ class cls_rabbitmq
     /**
      * 添加队列任务
      *
-     * @param $queue_name
-     * @param $payload
+     * @param string $queue_name
+     * @param string|array $payload
      * @param string $host
      * @param array $options
      * @return bool 添加成功返回 true，否则返回 false
      */
-    public static function add_job($queue_name, $payload, $host='rabbitmq', array $options = array())
+    public static function publish($queue_name, $payload, $host='rabbitmq', array $options = array())
     {
         if(!isset($GLOBALS['config'][$host]))
         {
@@ -88,14 +88,6 @@ class AMQPCAdapter
     private function __construct($hosts)
     {
         $this->hosts = $hosts;
-    }
-
-    /**
-     * 析构函数
-     */
-    public function __destruct()
-    {
-        $this->disconnect();
     }
 
     /**
@@ -201,7 +193,7 @@ class AMQPCAdapter
      * 发布消息到队列
      *
      * @param $queue_name
-     * @param array $payload
+     * @param string|array $payload
      * @return bool
      */
     public function publish($queue_name, $payload)
@@ -215,10 +207,21 @@ class AMQPCAdapter
         $exchange->setFlags(AMQP_DURABLE);
         $exchange->declareExchange();
 
-        $message = json_encode($payload);
+        // 使用 content_type 区分普通字符串还是 JSON
+        if (is_array($payload))
+        {
+            $content_type = 'application/json';
+            $message = json_encode($payload);
+        }
+        else
+        {
+            $content_type = 'text/plain';
+            $message = $payload;
+        }
+
         $attributes = [
-            'content_type' => 'text/plain',
-            'delivery_mode' => 2
+            'content_type' => $content_type,
+            'delivery_mode' => 2 // 2 表示消息持久化
         ];
 
         // 消息优先级
@@ -265,17 +268,27 @@ class AMQPCAdapter
             $this->beforeConsumeMessage();
 
             $flags = $this->auto_ack == false ? AMQP_NOPARAM : AMQP_AUTOACK;
-            $message = $queue->get($flags);
+            $envelope = $queue->get($flags);
 
-            if($message === false)
+            if($envelope === false)
             {
                 // 没有消息时，休息 1 秒，减少对服务器的请求
                 sleep(1);
                 continue;
             }
 
+            // 普通文本和 JSON 分开处理
+            if ($envelope->getContentType() == 'application/json')
+            {
+                $params = json_decode($envelope->getBody(), true);
+            }
+            else
+            {
+                $params = $envelope->getBody();
+            }
+
             // 开始处理业务逻辑
-            $result = $callback(json_decode($message->getBody(), true));
+            $result = $callback($params, $envelope);
 
             // 若非自动 ack，则需要手工 ack
             if($this->auto_ack == false)
@@ -283,11 +296,11 @@ class AMQPCAdapter
                 // 拒绝确认并将消息重新放回队列（消息还是在队列的开头位置）
                 if($result === 'reject')
                 {
-                    $queue->reject($message->getDeliveryTag(), AMQP_REQUEUE);
+                    $queue->reject($envelope->getDeliveryTag(), AMQP_REQUEUE);
                 }
                 else
                 {
-                    $queue->ack($message->getDeliveryTag());
+                    $queue->ack($envelope->getDeliveryTag());
                 }
             }
 

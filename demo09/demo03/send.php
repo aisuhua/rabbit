@@ -1,9 +1,6 @@
 <?php
 require (__DIR__ . '/../init.php');;
 
-// Usage:
-// shell> php send.php suhua is a good boy.
-
 // 队列名称
 $queue_name = 'options_queue';
 
@@ -16,7 +13,10 @@ $options = [
     'queue_prefix' => '115.web.', // 设置队列前缀
 ];
 
-$added = cls_rabbitmq::add_job($queue_name, $payload, 'rabbitmq', $options);
+$added = cls_rabbitmq::publish($queue_name, $payload, 'rabbitmq', $options);
 var_dump($added);
 
 
+/*
+shell> php send.php suhua is a good boy.
+ */

@@ -1,16 +1,22 @@
 <?php
 require (__DIR__ . '/../init.php');;
 
-// Usage: shell> php send.php Hello World!
-
 // 队列名称
 $queue_name = 'my_queue';
 
-// 消息内容
+// 字符串类型的消息
 $payload = implode(' ', array_slice($argv, 1));
-// $payload = array_slice($argv, 1);
+// 将消息发送到队列
+$added = cls_rabbitmq::publish($queue_name, $payload, 'rabbitmq');
+var_dump($added);
 
-$added = cls_rabbitmq::add_job($queue_name, $payload, 'rabbitmq');
+// 数组类型的消息
+$payload = array_slice($argv, 1);
+// 将消息发送到队列
+$added = cls_rabbitmq::publish($queue_name, $payload, 'rabbitmq');
 var_dump($added);
 
 
+/*
+shell> php send.php Hello World!
+ */

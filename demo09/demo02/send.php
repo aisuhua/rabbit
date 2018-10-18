@@ -1,13 +1,6 @@
 <?php
 require (__DIR__ . '/../init.php');;
 
-// Usage:
-// shell> php send.php 1 a
-// shell> php send.php 1 a
-// shell> php send.php 1 a
-// shell> php send.php 5 b
-// shell> php send.php 5 b
-
 // 队列名称
 $queue_name = 'priority_queue';
 
@@ -22,7 +15,16 @@ $options = [
     'priority' => $priority, // 消息优先级，数值越大表示优先级越高
 ];
 
-$added = cls_rabbitmq::add_job($queue_name, $payload, 'rabbitmq', $options);
+$added = cls_rabbitmq::publish($queue_name, $payload, 'rabbitmq', $options);
 var_dump($added);
 
+
+/*
+shell> php send.php 1 1
+shell> php send.php 1 2
+shell> php send.php 1 3
+shell> php send.php 2 4
+shell> php send.php 2 5
+shell> php send.php 3 6
+ */
 

@@ -1,6 +1,6 @@
 <?php
 $GLOBALS['rabbitmq'] = [
-    'host' => '172.16.0.108',
+    'host' => '192.168.31.200',
     'port' => '5672',
     'vhost' => '/',
     'login' => 'guest',
