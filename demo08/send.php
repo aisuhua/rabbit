@@ -4,7 +4,7 @@ require ('cls_rabbitmq.php');
 require ('functions.php');
 
 $queue_name = 'suhua';
-$payload = implode(' ', array_slice($argv, 1));
+$payload = array_slice($argv, 1);
 
 // 自定义其他配置
 $options = [

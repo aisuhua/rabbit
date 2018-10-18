@@ -5,7 +5,16 @@
  */
 class cls_rabbitmq
 {
-    public static function do_job($queue_name, $callback, $host = 'rabbitmq', $options = array())
+    /**
+     * 消费队列
+     *
+     * @param $queue_name
+     * @param $callback
+     * @param string $host
+     * @param array $options
+     * @return void
+     */
+    public static function do_job($queue_name, $callback, $host = 'rabbitmq', array $options = array())
     {
         if(!isset($GLOBALS['config'][$host]))
         {
@@ -17,7 +26,16 @@ class cls_rabbitmq
         $AMQPCAdapter->consume($queue_name, $callback);
     }
 
-    public static function add_job($queue_name, array $payload, $host='rabbitmq', $options = array())
+    /**
+     * 添加队列任务
+     *
+     * @param $queue_name
+     * @param array $payload
+     * @param string $host
+     * @param array $options
+     * @return bool 添加成功返回 true，否则返回 false
+     */
+    public static function add_job($queue_name, array $payload, $host='rabbitmq', array $options = array())
     {
         if(!isset($GLOBALS['config'][$host]))
         {
@@ -70,6 +88,14 @@ class AMQPCAdapter
     private function __construct($hosts)
     {
         $this->hosts = $hosts;
+    }
+
+    /**
+     * 析构函数
+     */
+    public function __destruct()
+    {
+        $this->disconnect();
     }
 
     /**
@@ -249,7 +275,7 @@ class AMQPCAdapter
             }
 
             // 开始处理业务逻辑
-            $result = $callback(json_decode($message->getBody()));
+            $result = $callback(json_decode($message->getBody(), true));
 
             // 若非自动 ack，则需要手工 ack
             if($this->auto_ack == false)
@@ -455,6 +481,9 @@ class AMQPCAdapter
                 }
             }
         }
+
+        // 实际上执行不到这里，仅仅为了屏蔽编辑器的警告
+        return false;
     }
 
     /**
@@ -474,5 +503,3 @@ class AMQPCAdapter
         $this->channel->setPrefetchCount($this->prefetch_count);
     }
 }
-
-
