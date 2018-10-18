@@ -17,7 +17,7 @@ class cls_rabbitmq
         $AMQPCAdapter->consume($queue_name, $callback);
     }
 
-    public static function add_job($queue_name, $payload, $host='rabbitmq', $options = array())
+    public static function add_job($queue_name, array $payload, $host='rabbitmq', $options = array())
     {
         if(!isset($GLOBALS['config'][$host]))
         {
@@ -45,11 +45,9 @@ class AMQPCAdapter
     private $start_time;
     private $max_ttl = 300; // 5minutes
     private $max_mem = 52428800; // 50MB
-
-    // 队列优先级
     private $x_max_priority = 0;
-    // 消息优先级
     private $priority = 0;
+    private $disable_signal_handle = false;
 
     /** @var AMQPConnection */
     private $connection;
@@ -128,9 +126,14 @@ class AMQPCAdapter
         }
 
         // 定义队列最大的优先级
-        if(isset($options['x-max-priority']))
+        if(isset($options['x_max_priority']))
         {
-            $this->x_max_priority = min(255, (int) $options['x-max-priority']);
+            $this->x_max_priority = min(255, (int) $options['x_max_priority']);
+        }
+
+        if(isset($options['disable_signal_handle']))
+        {
+            $this->disable_signal_handle = (bool) $options['disable_signal_handle'];
         }
     }
 
@@ -172,10 +175,10 @@ class AMQPCAdapter
      * 发布消息到队列
      *
      * @param $queue_name
-     * @param $payload
+     * @param array $payload
      * @return bool
      */
-    public function publish($queue_name, $payload)
+    public function publish($queue_name, array $payload)
     {
         // 创建连接
         $this->connect();
@@ -186,7 +189,7 @@ class AMQPCAdapter
         $exchange->setFlags(AMQP_DURABLE);
         $exchange->declareExchange();
 
-        $message = $payload;
+        $message = json_encode($payload);
         $attributes = [
             'content_type' => 'text/plain',
             'delivery_mode' => 2
@@ -222,7 +225,7 @@ class AMQPCAdapter
         $queue->setName($this->queue_prefix . $queue_name);
         $queue->setFlags(AMQP_DURABLE);
 
-        // 设置该队列支持最大的优先级
+        // 设置队列支持的最大优先级
         if($this->x_max_priority)
         {
             $queue->setArgument('x-max-priority', $this->x_max_priority);
@@ -246,7 +249,7 @@ class AMQPCAdapter
             }
 
             // 开始处理业务逻辑
-            $result = $callback($message->getBody());
+            $result = $callback(json_decode($message->getBody()));
 
             // 若非自动 ack，则需要手工 ack
             if($this->auto_ack == false)
@@ -271,39 +274,45 @@ class AMQPCAdapter
      */
     private function beforeConsume()
     {
-        // 处理信号量
-        $signals = [
-            SIGTERM => 'SIGTERM',
-            SIGHUP  => 'SIGHUP',
-            SIGINT  => 'SIGINT',
-            SIGQUIT => 'SIGQUIT',
-        ];
-
-        $sig_handler = function ($signo) use ($signals)
+        if(!$this->disable_signal_handle)
         {
-            echo sprintf(
-                '%s>> %s: %d, signal handler called, PID-%d exit peacefully.' . PHP_EOL,
-                date('Y-m-d H:i:s'),
-                isset($signals[$signo]) ? $signals[$signo] : 'Unknown',
-                $signo,
-                posix_getpid()
-            );
+            // 处理信号量
+            $signals = [
+                SIGTERM => 'SIGTERM',
+                SIGHUP  => 'SIGHUP',
+                SIGINT  => 'SIGINT',
+                SIGQUIT => 'SIGQUIT',
+            ];
 
-            // 关闭连接
-            $this->disconnect();
-            exit();
-        };
+            $sig_handler = function ($signo) use ($signals)
+            {
+                echo sprintf(
+                    '%s>> %s: %d, signal handler called, PID-%d exit peacefully.' . PHP_EOL,
+                    date('Y-m-d H:i:s'),
+                    isset($signals[$signo]) ? $signals[$signo] : 'Unknown',
+                    $signo,
+                    posix_getpid()
+                );
 
-        pcntl_signal(SIGTERM, $sig_handler); // kill
-        pcntl_signal(SIGHUP, $sig_handler); // kill -s HUP or kill -1
-        pcntl_signal(SIGINT, $sig_handler); // Ctrl-C
-        pcntl_signal(SIGQUIT, $sig_handler); // kill -3
+                // 关闭连接
+                $this->disconnect();
+                exit();
+            };
 
-        // 检查是否有信号量需要处理
-        pcntl_signal_dispatch();
+            pcntl_signal(SIGTERM, $sig_handler); // kill
+            pcntl_signal(SIGHUP, $sig_handler); // kill -s HUP or kill -1
+            pcntl_signal(SIGINT, $sig_handler); // Ctrl-C
+            pcntl_signal(SIGQUIT, $sig_handler); // kill -3
+
+            // 检查是否有信号量需要处理
+            pcntl_signal_dispatch();
+        }
 
         // 检查是否有文件发生变化
-        $this->auto_rerun == false ?: $this->handleChangedFiles(0);
+        if ($this->auto_rerun)
+        {
+            $this->handleChangedFiles(0);
+        }
     }
 
     /**
@@ -314,7 +323,7 @@ class AMQPCAdapter
     private function handleChangedFiles($period = 1)
     {
         $changed_files = get_changed_files($period);
-        if($changed_files)
+        if ($changed_files)
         {
             foreach ($changed_files as $file_path => $file_info)
             {
@@ -338,7 +347,10 @@ class AMQPCAdapter
     private function beforeConsumeMessage()
     {
         // 检查是否有信号量需要处理
-        pcntl_signal_dispatch();
+        if(!$this->disable_signal_handle)
+        {
+            pcntl_signal_dispatch();
+        }
 
         if($this->auto_rerun)
         {

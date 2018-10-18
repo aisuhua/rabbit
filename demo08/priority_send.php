@@ -5,7 +5,7 @@ require ('functions.php');
 
 $queue_name = 'priority-suhua';
 $priority = $argv[1];
-$payload = implode(' ', array_slice($argv, 2));
+$payload = array_slice($argv, 2);
 
 $options = [
     'priority' => $priority, // 消息优先级

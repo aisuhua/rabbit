@@ -3,14 +3,11 @@ require ('config.php');
 require('cls_rabbitmq.php');
 require ('functions.php');
 
-$data = [];
-
 $queue_name = 'priority-suhua';
-$callback = function($params) use (&$data) {
-    echo $params, PHP_EOL;
+$callback = function($params)
+{
+    print_r($params);
     $start_time = microtime(true);
-
-    $data[] = file_get_contents('/www/web/v.demo.114la.com.tar.gz');
 
     $i = 0;
     while ($i++ < 10)
@@ -26,7 +23,8 @@ $callback = function($params) use (&$data) {
 
 // 自定义其他配置
 $options = [
-    'x-max-priority' => 10, // 该队列支持的最大优先级，一旦创建无法修改
+    'x_max_priority' => 10, // 该队列支持的最大优先级，一旦创建无法修改
+    'disable_signal_handle' => false,
 ];
 
 cls_rabbitmq::do_job($queue_name, $callback, 'rabbitmq', $options);
