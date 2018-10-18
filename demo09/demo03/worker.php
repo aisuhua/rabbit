@@ -24,7 +24,7 @@ $options = [
     'max_mem' => 20 * 1024 * 1024, // worker 占用内存超过该值会重新运行，仅当 auto_return = true 时有效
     'auto_ack' => false, // 若需要使用 auto_ack 时可以设置为 true
     'prefetch_count' => 1, // 预提取的消息数，默认为 1，较适合目前网盘大部分场景
-    'disable_signal_handle' => false, // 是否禁用信号量处理，在 shell 中进行调试时，设置该值为 true，按 Ctrl+C 能立即中断当前进程。
+    'disable_signal_handle' => false, // 是否禁用信号量处理，在 shell 中进行调试时，若设置该值为 true，按 Ctrl+C 能立即中断当前进程。
 ];
 
 cls_rabbitmq::consume($queue_name, $callback, 'rabbitmq', $options);
