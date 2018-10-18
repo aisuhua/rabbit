@@ -1,5 +1,8 @@
 <?php
 
+/**
+ * 业务层使用入口
+ */
 class cls_rabbitmq
 {
     public static function do_job($queue_name, $callback, $host = 'rabbitmq', $options = array())
@@ -27,12 +30,17 @@ class cls_rabbitmq
     }
 }
 
+/**
+ * 对 RabbitMQ 客户端连接库 php-amqp 进行封装
+ *
+ * @link https://github.com/pdezwart/php-amqp
+ */
 class AMQPCAdapter
 {
     private $exchange_name = 'amq.direct';
     private $queue_prefix = '';
     private $prefetch_count = 1;
-    
+
     /** @var AMQPConnection */
     private $connection;
 
@@ -76,7 +84,7 @@ class AMQPCAdapter
     }
 
     /**
-     * 应用自定义配置选项
+     * 应用配置选项
      *
      * @param array $options
      */
@@ -99,7 +107,7 @@ class AMQPCAdapter
     }
 
     /**
-     * 开始消费队列
+     * 消费队列
      *
      * @param $queue_name
      * @param $callback
@@ -140,7 +148,7 @@ class AMQPCAdapter
     }
 
     /**
-     * 将消息发布到队列
+     * 发布消息到队列
      *
      * @param $queue_name
      * @param $payload
@@ -166,7 +174,7 @@ class AMQPCAdapter
     }
 
     /**
-     * 与 RabbitMQ 建立连接
+     * 建立连接
      *
      * @return bool
      * @throws AMQPException
@@ -226,7 +234,7 @@ class AMQPCAdapter
     }
 
     /**
-     * 声明 channel
+     * 创建 channel
      */
     private function declareChannel()
     {
