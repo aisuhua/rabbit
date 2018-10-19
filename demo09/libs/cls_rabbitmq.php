@@ -542,7 +542,7 @@ class AMQPCAdapter
     {
         // 输出每次循环后的状态信息
         echo sprintf(
-            '%s>> memory %s, uptime %s.' . PHP_EOL,
+            '%s>> memory usage %s, uptime %s' . PHP_EOL,
             date('Y-m-d H:i:s'),
             format_size(memory_get_usage(true)),
             format_seconds(time() - $this->start_time)
