@@ -1,2 +1,4 @@
+# How to use php-amqp
 
-使用默认交换器 (AMQP default)，此交换器名称为空。
+- [rabbitmq-tutorials/php-amqp](https://github.com/rabbitmq/rabbitmq-tutorials/tree/master/php-amqp)
+- [php-amqp/tests](https://github.com/pdezwart/php-amqp/tree/master/tests)

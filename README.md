@@ -1,57 +1,35 @@
 
-## 连接的 library
+# How to use RabbitMQ in PHP
 
-- [PHP AMQP Binding Library](https://github.com/pdezwart/php-amqp) Object-oriented PHP bindings for the AMQP C library
-- [php-amqplib](https://github.com/php-amqplib/php-amqplib) This library is a pure PHP implementation of the AMQP 0-9-1 protocol
-- [PECL: amqp](https://pecl.php.net/package/amqp)
+## Library 
 
-总结几个概念
+- [php-amqp](https://github.com/pdezwart/php-amqp)
+- [php-amqplib](https://github.com/php-amqplib/php-amqplib)
 
-1. 消息是发布到交换器，由交换器将消息路由到队列。
-    - 发送到交换器的每条信息都带有 routing key；
-    - 队列使用 binding key 绑定到交换器；
-    - 交换器根据消息的 routing key，将消息路由到已绑定到该交换器并且 binding key 与 routing key 相符合的队列；
-    - fanout 交换器为广播类型，不用指定 binding key 和 routing key，若存在则会被忽略；
-    - direct 交换器要求队列的 binding key 和消息的 routing key 必须一致，才会将该消息路由到该队列；
-    - topic 交换器可以让队列的 binding key 更加灵活，模糊匹配到更多 routing key。
-2. 若不进行显式绑定，队列创建后默认使用队列名作为 binding key 绑定到默认交换器（AMQP default）。
-    - 默认交换器（AMQP default）是一个名字为空的 direct 类型的交换器；
-    - 系统内置的 amp.direct、amp.fanout、amp.topic 交换器可以直接使用，无需自行创建交换器亦可直接使用；
-3. 连接到集群中哪一个 RabbitMQ 实例创建队列，队列就会创建在这一个 RabbitMQ 实例。
-4. 队列一旦创建后，就无法对该队列进行任何修改。
-    - x-max-priority 优先级在队列创建时声明，后续无法动态修改，除非删除队列；
-    - Policy 策略可以在运行时随时变更并马上生效，比如添加镜像队列策略；
+### How to use php-amqplib
 
-## ack/nack/reject 的区别
+demo01
 
-- [Negative Acknowledgements](https://www.rabbitmq.com/nack.html)
-- [Consumer Acknowledgements and Publisher Confirms](https://www.rabbitmq.com/confirms.html)
-- [Ack or Nack in rabbitMQ](https://stackoverflow.com/questions/28794123/ack-or-nack-in-rabbitmq)
+### How to use php-amqp
 
-## Tips
+demo02
 
-失败重连、信号量的处理、消费失败重新返回队列、heartbeat 设置、
+### How to use cls_rabbitmq.php
 
-## Delayed Messaging for RabbitMQ
+demo03
 
-延迟信息，官方以插件的形式提供。由于受应用场景所限，对此不做太多研究。
+cls_rabbitmq.php 是对 php-amqp 的封装，目的是为了屏蔽实现细节，简化操作。
 
-- [RabbitMQ Delayed Message Plugin](https://github.com/rabbitmq/rabbitmq-delayed-message-exchange)
-- [Scheduling Messages with RabbitMQ](https://www.rabbitmq.com/blog/2015/04/16/scheduling-messages-with-rabbitmq/)
+对于长时间不间断在后台运行的进程，该库加入了以下特征：
 
-## 安装插件
+1. 信号量处理。防止正在执行任务的进程被临时中断
+2. 当文件发送修改时，自动重新运行进程。能让文件的修改实时生效，无需人工重启进程
+3. 当内存占用超过限制时，自动重新运行进程。防止进程占用内存过大。
+4. 直接全局设置队列前缀。
 
-```sh
-wget "https://dl.bintray.com/rabbitmq/community-plugins/3.7.x/rabbitmq_delayed_message_exchange/rabbitmq_delayed_message_exchange-20171201-3.7.x.zip"
-unzip rabbitmq_delayed_message_exchange-20171201-3.7.x.zip
-mv rabbitmq_delayed_message_exchange-20171201-3.7.x.ez /usr/lib/rabbitmq/lib/rabbitmq_server-3.7.8/plugins
-rabbitmq-plugins enable rabbitmq_delayed_message_exchange
-```
+#### 弊端
 
-查看是否安装成功
+这种封装虽能简化对队列的操作，但是队列所拥有的很多特征是不支持的，比如 死信队列、延迟队列等等。
+这种封装可提供傻瓜式的使用体验，如果希望对队列的操作过程有更多控制，应该考虑直接使用第三方 library。
 
-```sh
-rabbitmq-plugins list
-```
 
-- [Installing Additional Plugins](http://www.rabbitmq.com/installing-plugins.html)
