@@ -27,4 +27,4 @@ $options = [
     'disable_signal_handle' => false, // 是否禁用信号量处理，在 shell 中进行调试时，若设置该值为 true，按 Ctrl+C 能立即中断当前进程。
 ];
 
-cls_rabbitmq::consume($queue_name, $callback, 'rabbitmq', $options);
+cls_rabbitmq::do_job($queue_name, $callback, 'rabbitmq', $options);

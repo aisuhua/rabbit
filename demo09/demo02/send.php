@@ -15,7 +15,7 @@ $options = [
     'priority' => $priority, // 消息优先级，数值越大表示优先级越高
 ];
 
-$added = cls_rabbitmq::publish($queue_name, $payload, 'rabbitmq', $options);
+$added = cls_rabbitmq::add_job($queue_name, $payload, 'rabbitmq', $options);
 var_dump($added);
 
 

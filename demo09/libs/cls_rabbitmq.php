@@ -14,7 +14,7 @@ class cls_rabbitmq
      * @param array $options
      * @return void
      */
-    public static function consume($queue_name, $callback, $host = 'rabbitmq', array $options = array())
+    public static function do_job($queue_name, $callback, $host = 'rabbitmq', array $options = array())
     {
         if(!isset($GLOBALS['config'][$host]))
         {
@@ -35,7 +35,7 @@ class cls_rabbitmq
      * @param array $options
      * @return bool 添加成功返回 true，否则返回 false
      */
-    public static function publish($queue_name, $payload, $host='rabbitmq', array $options = array())
+    public static function add_job($queue_name, $payload, $host='rabbitmq', array $options = array())
     {
         if(!isset($GLOBALS['config'][$host]))
         {
