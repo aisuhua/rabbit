@@ -14,14 +14,9 @@ class cls_rabbitmq
      * @param array $options
      * @return void
      */
-    public static function do_job($queue_name, $callback, $host = 'rabbitmq', array $options = array())
+    public static function do_job($queue_name, $callback, $host = 'rabbitmq', array $options = [])
     {
-        if(!isset($GLOBALS['config'][$host]))
-        {
-            throw new InvalidArgumentException("The host {$host} is not exists.");
-        }
-
-        $AMQPCAdapter = AMQPCAdapter::getInstance($GLOBALS['config'][$host]);
+        $AMQPCAdapter = self::getAMQPCAdapter($host);
         $AMQPCAdapter->applyConsumeOptions($options);
         $AMQPCAdapter->consume($queue_name, $callback);
     }
@@ -35,16 +30,72 @@ class cls_rabbitmq
      * @param array $options
      * @return bool 添加成功返回 true，否则返回 false
      */
-    public static function add_job($queue_name, $payload, $host='rabbitmq', array $options = array())
+    public static function add_job($queue_name, $payload, $host='rabbitmq', array $options = [])
+    {
+        $AMQPCAdapter = self::getAMQPCAdapter($host);
+        $AMQPCAdapter->applyPublishOptions($options);
+        return $AMQPCAdapter->publish($queue_name, $payload);
+    }
+
+    /**
+     * 获取队列的消息总数
+     *
+     * @param $queue_name
+     * @param string $host
+     * @param array $options
+     * @return int
+     */
+    public static function get_message_count($queue_name, $host='rabbitmq', array $options = [])
+    {
+        $AMQPCAdapter = self::getAMQPCAdapter($host);
+        $AMQPCAdapter->applyConsumeOptions($options);
+        return $AMQPCAdapter->getMessageCount($queue_name);
+    }
+
+    /**
+     * 清空队列的所有消息
+     *
+     * @param $queue_name
+     * @param string $host
+     * @param array $options
+     * @return bool
+     */
+    public static function purge($queue_name, $host='rabbitmq', array $options = [])
+    {
+        $AMQPCAdapter = self::getAMQPCAdapter($host);
+        $AMQPCAdapter->applyConsumeOptions($options);
+        return $AMQPCAdapter->purge($queue_name);
+    }
+
+    /**
+     * 删除该队列
+     *
+     * @param $queue_name
+     * @param string $host
+     * @param array $options
+     * @return int 返回被删除队列的消息数
+     */
+    public static function delete($queue_name, $host='rabbitmq', array $options = [])
+    {
+        $AMQPCAdapter = self::getAMQPCAdapter($host);
+        $AMQPCAdapter->applyConsumeOptions($options);
+        return $AMQPCAdapter->delete($queue_name);
+    }
+
+    /**
+     * 获取 AMQPCAdapter 实例对象
+     *
+     * @param $host
+     * @return AMQPCAdapter
+     */
+    private function getAMQPCAdapter($host)
     {
         if(!isset($GLOBALS['config'][$host]))
         {
             throw new InvalidArgumentException("The host {$host} is not exists.");
         }
 
-        $AMQPCAdapter = AMQPCAdapter::getInstance($GLOBALS['config'][$host]);
-        $AMQPCAdapter->applyPublishOptions($options);
-        return $AMQPCAdapter->publish($queue_name, $payload);
+        return AMQPCAdapter::getInstance($GLOBALS['config'][$host]);
     }
 }
 
@@ -72,6 +123,9 @@ class AMQPCAdapter
 
     /** @var AMQPChannel */
     private $channel;
+
+    /** @var AMQPQueue */
+    private $queue;
 
     /** @var array */
     private $hosts;
@@ -250,18 +304,12 @@ class AMQPCAdapter
         // 创建连接
         $this->connect();
 
-        $queue = new AMQPQueue($this->channel);
-        $queue->setName($this->queue_prefix . $queue_name);
-        $queue->setFlags(AMQP_DURABLE);
+        // 创建队列
+        $this->declareQueue($queue_name);
 
-        // 设置队列支持的最大优先级
-        if($this->x_max_priority)
-        {
-            $queue->setArgument('x-max-priority', $this->x_max_priority);
-        }
-        $queue->declareQueue();
-
-        $queue->bind($this->exchange_name, $queue_name);
+        // 将队列绑定到交换器，使用队列名作为路由键
+        $this->queue->bind($this->exchange_name, $queue_name);
+        $queue = $this->queue;
 
         while(true)
         {
@@ -309,10 +357,72 @@ class AMQPCAdapter
     }
 
     /**
+     * 获取队列的消息总数
+     *
+     * @param $queue_name
+     * @return int
+     */
+    public function getMessageCount($queue_name)
+    {
+        $this->connect();
+        return $this->declareQueue($queue_name);
+    }
+
+    /**
+     * 清空队列的所有消息
+     *
+     * @param $queue_name
+     * @return bool
+     */
+    public function purge($queue_name)
+    {
+        $this->connect();
+        $this->declareQueue($queue_name);
+
+        return $this->queue->purge();
+    }
+
+    /**
+     * 删除该队列
+     *
+     * @param $queue_name
+     * @return bool
+     */
+    public function delete($queue_name)
+    {
+        $this->connect();
+        $this->declareQueue($queue_name);
+
+        return $this->queue->delete();
+    }
+
+    /**
+     * 声明队列
+     *
+     * @param $queue_name
+     * @return int 返回队列的消息数
+     */
+    private function declareQueue($queue_name)
+    {
+        $this->queue = new AMQPQueue($this->channel);
+        $this->queue->setName($this->queue_prefix . $queue_name);
+        $this->queue->setFlags(AMQP_DURABLE);
+
+        // 设置队列支持的最大优先级
+        if($this->x_max_priority)
+        {
+            $this->queue->setArgument('x-max-priority', $this->x_max_priority);
+        }
+
+        return $this->queue->declareQueue();
+    }
+
+    /**
      * beforeConsume
      */
     private function beforeConsume()
     {
+        // 注册信号量处理程序
         if(!$this->disable_signal_handle)
         {
             // 处理信号量
@@ -342,15 +452,18 @@ class AMQPCAdapter
             pcntl_signal(SIGHUP, $sig_handler); // kill -s HUP or kill -1
             pcntl_signal(SIGINT, $sig_handler); // Ctrl-C
             pcntl_signal(SIGQUIT, $sig_handler); // kill -3
-
-            // 检查是否有信号量需要处理
-            pcntl_signal_dispatch();
         }
 
-        // 检查是否有文件发生变化
+        // 收集需要监控变化的文件列表
         if ($this->auto_rerun)
         {
             $this->handleChangedFiles(0);
+        }
+
+        // 检查是否有信号量需要处理
+        if(!$this->disable_signal_handle)
+        {
+            pcntl_signal_dispatch();
         }
     }
 
@@ -489,7 +602,7 @@ class AMQPCAdapter
             }
             catch (\AMQPException $e)
             {
-                trigger_error($e->getMessage(), E_USER_ERROR);
+                trigger_error($e->getMessage(), E_USER_WARNING);
 
                 // 没有一个能连接上则抛出异常
                 if ($i == $len - 1)

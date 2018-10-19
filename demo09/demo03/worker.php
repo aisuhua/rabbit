@@ -22,7 +22,7 @@ $options = [
     'auto_rerun' => true, // 是否开启重新运行，默认为 true
     'max_ttl' => 60, // worker 工作时长超过该值会重新运行，仅当 auto_return = true 时有效。
     'max_mem' => 20 * 1024 * 1024, // worker 占用内存超过该值会重新运行，仅当 auto_return = true 时有效
-    'auto_ack' => false, // 若需要使用 auto_ack 时可以设置为 true
+    'auto_ack' => false, // 若该队列的每条消息只允许消费一次（无论成功或失败）并且可接受丢失，可设置为 true
     'prefetch_count' => 1, // 预提取的消息数，默认为 1，较适合目前网盘大部分场景
     'disable_signal_handle' => false, // 是否禁用信号量处理，在 shell 中进行调试时，若设置该值为 true，按 Ctrl+C 能立即中断当前进程。
 ];

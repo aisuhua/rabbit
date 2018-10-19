@@ -10,5 +10,8 @@ $GLOBALS['config']['rabbitmq'] = [
         'vhost' => '/',
         'login' => 'guest',
         'password' => 'guest',
+        'read_timeout'    => 2,
+        'write_timeout'   => 2,
+        'connect_timeout' => 1,
     ]
 ];
