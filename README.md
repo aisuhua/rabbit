@@ -6,15 +6,15 @@
 - [php-amqp](https://github.com/pdezwart/php-amqp)
 - [php-amqplib](https://github.com/php-amqplib/php-amqplib)
 
-### How to use php-amqplib
+## How to use php-amqplib
 
 demo01
 
-### How to use php-amqp
+## How to use php-amqp
 
 demo02
 
-### How to use cls_rabbitmq.php
+## How to use cls_rabbitmq.php
 
 demo03
 
@@ -27,7 +27,7 @@ cls_rabbitmq.php 是对 php-amqp 的封装，目的是为了屏蔽实现细节�
 3. 当内存占用超过限制时，自动重新运行进程。防止进程占用内存过大。
 4. 直接全局设置队列前缀。
 
-#### 弊端
+### 弊端
 
 这种封装虽能简化对队列的操作，但是队列所拥有的很多特征是不支持的，比如 死信队列、延迟队列等等。
 这种封装可提供傻瓜式的使用体验，如果希望对队列的操作过程有更多控制，应该考虑直接使用第三方 library。
