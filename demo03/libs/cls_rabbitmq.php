@@ -87,7 +87,7 @@ class cls_rabbitmq
      * @param $host
      * @return AMQPCAdapter
      */
-    private function getAMQPCAdapter($host)
+    private static function getAMQPCAdapter($host)
     {
         if(!isset($GLOBALS['config'][$host]))
         {
@@ -479,7 +479,7 @@ class AMQPCAdapter
             foreach ($changed_files as $file_path => $file_info)
             {
                 echo sprintf(
-                    '%s>> %s was modified at %s(%s), PID-%d rerun automatically.' . PHP_EOL,
+                    '%s>> %s was modified at %s(%s), PID-%d exit automatically.' . PHP_EOL,
                     date('Y-m-d H:i:s'),
                     basename($file_path),
                     date('Y-m-d H:i:s', $file_info['time']),
@@ -488,7 +488,7 @@ class AMQPCAdapter
                 );
             }
 
-            rerun_process();
+            exit();
         }
     }
 
@@ -512,24 +512,24 @@ class AMQPCAdapter
             if (time() - $this->start_time >= $this->max_ttl)
             {
                 echo sprintf(
-                    '%s>> Process has been running for %ds, PID-%d rerun automatically.' . PHP_EOL,
+                    '%s>> Process has been running for %ds, PID-%d exit automatically.' . PHP_EOL,
                     date('Y-m-d H:i:s'),
                     time() - $this->start_time,
                     posix_getpid()
                 );
-                rerun_process();
+                exit();
             }
 
             // 检查内存占用是否超过限制
             if(memory_get_usage(true) > $this->max_mem)
             {
                 echo sprintf(
-                    '%s>> Process out of Memory %s, PID-%d rerun automatically.' . PHP_EOL,
+                    '%s>> Process out of Memory %s, PID-%d exit automatically.' . PHP_EOL,
                     date('Y-m-d H:i:s'),
                     format_size($this->max_mem),
                     posix_getpid()
                 );
-                rerun_process();
+                exit();
             }
         }
     }
